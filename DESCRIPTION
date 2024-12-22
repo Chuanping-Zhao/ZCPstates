@@ -1,0 +1,33 @@
+Package: ZCPstates
+Title: ZCPstates: An R Package for Daily Proteomics Analysis and
+    Visualization
+Version: 0.1.0
+Authors@R: 
+    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"))
+Description: ZCPstates is a lightweight R package designed for daily
+    proteomics data analysis and visualization. The package provides tools
+    for exploring proteomics data, and facilitating routine workflows for
+    data preprocessing and result interpretation.
+License: MIT
+Imports: 
+    aPEAR,
+    crayon,
+    data.table,
+    dplyr,
+    export,
+    ggplot2,
+    ggtext,
+    grid,
+    patchwork,
+    purrr,
+    reshape2,
+    stats,
+    stringr,
+    tidyr,
+    readr
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Depends: 
+    R (>= 3.5)
+LazyData: true
