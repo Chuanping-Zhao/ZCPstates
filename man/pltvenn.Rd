@@ -8,7 +8,8 @@ pltvenn(
   dat_long,
   group.by = "sample",
   proteincol.id = "Accession",
-  fill.alpha = 0.3
+  fill.alpha = 0.3,
+  type = c("ellipse", "circle")[1]
 )
 }
 \arguments{
@@ -47,6 +48,6 @@ dt = data.frame(
   id = c(group1, group2, group3),
   group = rep(c("group1", "group2", "group3"), each = length(common_elements) + 5)
 )
-pltvenn(dt, group.by = "group", proteincol.id = "id")
+pltvenn(dt, group.by = "group", proteincol.id = "id",type=c("ellipse","circle")[1])
 
 }
