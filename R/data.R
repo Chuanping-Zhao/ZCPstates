@@ -33,3 +33,28 @@
 #' }
 #'@source Example data
 "uniprotEnrichplot.demo.GO.CC"
+
+#' @title Glycan_network_demo: Example Glycan Network Data
+#'
+#' @description
+#' This dataset provides a sample glycan network for demonstration, containing
+#' columns such as \code{Annotated Sequence}, \code{Glycan composition}, and
+#' \code{Master Protein Accessions}. It can be used to test or illustrate
+#' glycan-related functions in the package.
+#'
+#' @format A data frame with 21 rows and 3 columns:
+#' \describe{
+#'   \item{Annotated Sequence}{The annotated peptide sequence.}
+#'   \item{Glycan composition}{The glycan composition, e.g. \code{HexNAc(2)Hex(8)}.}
+#'   \item{Master Protein Accessions}{Protein accession identifiers (e.g., \code{Q8TCJ2}).}
+#' }
+#'
+#' @details
+#' Each row corresponds to a particular glycopeptide with its associated glycan
+#' composition and the protein accession from which it originates. This dataset
+#' can be loaded with:
+#' \preformatted{
+#'   data("Glycan_network_demo", package = "ZCPstates")
+#' }
+#'@source Example data
+"Glycan_network_demo"
