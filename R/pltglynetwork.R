@@ -9,6 +9,8 @@
 #' @param outdir Character. Directory path to save output files. Default is "outputfile_test".
 #' @param SiteperProteinsCutoff Numeric. A cutoff value for the number of glycosylation sites per protein. Default is 4.
 #' @param edge_cex Numeric. The line width for the network edges in the plot. Default is 0.5.
+#' @param edge_alpha Numeric, range from 0 to 1.The transparency for the network edges in the plot. Default is 0.3.
+#' @param node_alpha Numeric, range from 0 to 1.The transparency for the network nodes in the plot. Default is 0.5
 #' @param node_size Numeric. The size of the network nodes. Default is 3.
 #' @param Title Character. The title of the network plot. Default is "test".
 #'
@@ -58,6 +60,8 @@ pltglynetwork=function(dt,
                        protein.col="Master Protein Accessions",
                        outdir="outputfile_test",
                        SiteperProteinsCutoff=4,
+                       edge_alpha=0.3,
+                       node_alpha=0.5,
                        edge_cex=0.5,
                        node_size=3,
                        Title="test"
@@ -215,8 +219,8 @@ pltglynetwork=function(dt,
 
 
     fig <- ggplot2::ggplot(net_test) +
-      ggnetwork::geom_edges(linewidth= edge_cex, ggplot2::aes(x, y, xend = xend, yend = yend, colour=Glycan_Type), alpha=0.3) +
-      ggnetwork::geom_nodes(ggplot2::aes(x, y, colour=Glycan_Type),size = node_size) +
+      ggnetwork::geom_edges(linewidth= edge_cex, ggplot2::aes(x, y, xend = xend, yend = yend, colour=Glycan_Type), alpha=edge_alpha) +
+      ggnetwork::geom_nodes(ggplot2::aes(x, y, colour=Glycan_Type),size = node_size,alpha=node_alpha) +
       ggplot2::geom_bar(data=dat_proteinsitecount,stat = "identity",
                width = 0.03,ggplot2::aes(x=0.5, y = Prot_Num/sum(Prot_Num),
                                 fill=as.factor(SiteperProt)))+

@@ -11,6 +11,8 @@ pltglynetwork(
   protein.col = "Master Protein Accessions",
   outdir = "outputfile_test",
   SiteperProteinsCutoff = 4,
+  edge_alpha = 0.3,
+  node_alpha = 0.5,
   edge_cex = 0.5,
   node_size = 3,
   Title = "test"
@@ -28,6 +30,10 @@ pltglynetwork(
 \item{outdir}{Character. Directory path to save output files. Default is "outputfile_test".}
 
 \item{SiteperProteinsCutoff}{Numeric. A cutoff value for the number of glycosylation sites per protein. Default is 4.}
+
+\item{edge_alpha}{Numeric, range from 0 to 1.The transparency for the network edges in the plot. Default is 0.3.}
+
+\item{node_alpha}{Numeric, range from 0 to 1.The transparency for the network nodes in the plot. Default is 0.5}
 
 \item{edge_cex}{Numeric. The line width for the network edges in the plot. Default is 0.5.}
 
