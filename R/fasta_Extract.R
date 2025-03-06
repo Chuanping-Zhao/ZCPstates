@@ -27,10 +27,6 @@
 #' @importFrom tibble tibble
 #' @export
 #'
-#' @examples
-#' # Example of extracting information from a FASTA file:
-#' fasta_info <- Fasta_extract("your_fasta_file.fasta")
-#'
 Fasta_extract=function(fasta.path="uniprotkb_proteome_UP000005640_AND_revi_2024_02_17.fasta"){
 fasta=Biostrings::readAAStringSet(fasta.path)
 #fasta.test=fasta[1]

@@ -15,6 +15,7 @@
 #'   Venn diagram.
 #' @param fill.alpha A numeric value between 0 and 1 that controls the transparency of the
 #'   fill color in the Venn diagram (default is 0.3).
+#' @param type plotting ellipse or circle(default is ellipse).
 #'
 #' @return A Venn diagram (Euler diagram) plot generated using the `eulerr` package. The plot
 #'   shows the intersection of proteins across the different groups.

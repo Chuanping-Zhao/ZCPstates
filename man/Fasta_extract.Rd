@@ -33,8 +33,3 @@ The FASTA header is expected to follow the format:
 The function assumes that the header information contains at least the UniProt ID,
 Gene Name, and Gene Description for proper extraction.
 }
-\examples{
-# Example of extracting information from a FASTA file:
-fasta_info <- Fasta_extract("your_fasta_file.fasta")
-
-}

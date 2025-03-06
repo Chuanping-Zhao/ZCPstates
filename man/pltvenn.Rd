@@ -26,6 +26,8 @@ Venn diagram.}
 
 \item{fill.alpha}{A numeric value between 0 and 1 that controls the transparency of the
 fill color in the Venn diagram (default is 0.3).}
+
+\item{type}{plotting ellipse or circle(default is ellipse).}
 }
 \value{
 A Venn diagram (Euler diagram) plot generated using the \code{eulerr} package. The plot

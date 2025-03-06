@@ -29,7 +29,11 @@ Imports:
     igraph,
     ggsci,
     useful,
-    vctrs
+    vctrs,
+    Biostrings,
+    eulerr,
+    rlang,
+    tibble
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
