@@ -64,6 +64,7 @@
 #' \itemize{
 #'   \item \code{data.table::data.table}
 #'   \item \code{data.table::melt}
+#'   \item \code{data.table::merge}
 #'   \item \code{data.table::rbindlist}
 #'   \item \code{data.table::setnames}
 #'   \item \code{data.table::as.data.table}
@@ -212,12 +213,26 @@ easydiff = function(exp_matrix,
     }
 
     #记录模型参数
+
+    valid_rows = which(!is.na(sub_data$ABUNDANCE))
+    residuals_full = rep(NA_real_, nrow(sub_data))
+    residuals_full[valid_rows] = residuals(model)
+    fitted_full = rep(NA_real_, nrow(sub_data))
+    fitted_full[valid_rows] = fitted(model)
     qc_data[, `:=`(
-      residuals = residuals(model),
-      fitted = fitted(model)
+      residuals = residuals_full,
+      fitted = fitted_full
     )]
     model_qc_list <<- c(model_qc_list, list(qc_data))
-    fitted_models[[prot]] <<- if (exists("model")) model else NULL
+    fitted_models[[prot]] <<- model
+
+
+   # qc_data[, `:=`(
+   #   residuals = residuals(model),
+   #   fitted = fitted(model)
+  #  )]
+   # model_qc_list <<- c(model_qc_list, list(qc_data))
+   # fitted_models[[prot]] <<- if (exists("model")) model else NULL
 
     #提取模型系数
     coefs = coef(model)

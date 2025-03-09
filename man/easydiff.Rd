@@ -77,6 +77,7 @@ All external functions are imported using \code{\link[=importFrom]{importFrom}}.
 \itemize{
 \item \code{data.table::data.table}
 \item \code{data.table::melt}
+\item \code{data.table::merge}
 \item \code{data.table::rbindlist}
 \item \code{data.table::setnames}
 \item \code{data.table::as.data.table}
