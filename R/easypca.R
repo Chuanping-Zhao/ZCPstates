@@ -74,8 +74,8 @@ easypca=function(df,
              #group.id="gender",
              mutigoup.id=c("gender","age_range"),#如果mutigroup=T 就需要指定
              scaling="pareto", # pareto uv logtrans noop无任何操作
-             procomp.center=T,
-             procomp.scale=T,
+             procomp.center=TRUE,
+             procomp.scale=FALSE,
              pointsize=1.5
 ){
 

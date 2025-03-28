@@ -8,8 +8,8 @@ easyvolcano(
   diff,
   cutoff_fc = 1.2,
   cutoff_p = 0.05,
-  top_marker = 5,
-  max_overlaps = 10,
+  top_marker = 0,
+  max_overlaps = 0,
   Feature = "protein"
 )
 }

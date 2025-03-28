@@ -20,7 +20,7 @@
 #'
 #' @importFrom dplyr filter arrange mutate
 #' @importFrom ggplot2 ggplot aes geom_point labs theme scale_color_manual scale_x_continuous scale_y_continuous
-#' @importFrom ggrepel geom_label_repel
+#' @importFrom ggrepel geom_text_repel
 #'
 #' @return A list with the following components:
 #' \describe{
@@ -50,7 +50,7 @@
 #'
 #' @export
 #' 
-easyvolcano=function(diff,cutoff_fc=1.2,cutoff_p=0.05,top_marker=5,max_overlaps=10,Feature="protein"){
+easyvolcano=function(diff,cutoff_fc=1.2,cutoff_p=0.05,top_marker=0,max_overlaps=0,Feature="protein"){
   
   diff.result=diff |> dplyr::mutate(significance= dplyr::case_when(
     (log2FC>=log2(cutoff_fc))&(pvalue<=cutoff_p)~"up",
@@ -163,26 +163,22 @@ color.pals=c(
 plt.vol2=
   ggplot2::ggplot()+
   ggplot2::geom_col(background.dat,mapping= ggplot2::aes(x.local,y.localup),
-           fill="grey50",alpha=0.2,width=0.9,just = 0.5)+
+                    fill="grey50",alpha=0.2,width=0.9,just = 0.5)+
   ggplot2::geom_col(background.dat,mapping= ggplot2::aes(x.local,y.localdown),
-           fill="grey50",alpha=0.2,width=0.9,just = 0.5)+
-  ggplot2::geom_jitter(dat.plot,mapping= ggplot2::aes(x.local,log2FC,
-                                   color=significance,
-                                   fill=significance),
-              size=1.5,width = 0.4,alpha= 0.4)+
-  #scale_color_manual(values = c("#82677e","#eaebea","#59829e"))
-  ggplot2::scale_color_manual(values = c("#5390b5","#eaebea","#d56e5e"))+
-  ggplot2::geom_tile(dat.infor,mapping= ggplot2::aes(x.local,y.infor,fill=Label,
-                                  color = Label),
-            show.legend = F,
-            height=log2(cutoff_fc)*1.5,
-            color = color.pals[1:length(unique(dat.plot$Label))],
-            fill = color.pals[1:length(unique(dat.plot$Label))],
-            alpha = 0.6,
-            width=0.9)+
+                    fill="grey50",alpha=0.2,width=0.9,just = 0.5)+
+  ggplot2::geom_jitter(dat.plot |> dplyr::filter(significance=="nosig"),mapping= ggplot2::aes(x.local,log2FC),color="#eaebea",size=1.5,width = 0.4,alpha= 0.8)+#color="#eaebea"
+  ggplot2::geom_jitter(dat.plot |> dplyr::filter(significance=="up"),mapping= ggplot2::aes(x.local,log2FC+0.5*(1/cutoff_fc)),color="#d56e5e",size=1.5,width = 0.4,alpha= 0.4)+
+  ggplot2::geom_jitter(dat.plot |> dplyr::filter(significance=="down"),mapping= ggplot2::aes(x.local,log2FC-0.5*(1/cutoff_fc)),color="#5390b5",size=1.5,width = 0.4,alpha= 0.4)+
+  
+  ggplot2::geom_tile(dat.infor,mapping= ggplot2::aes(x.local,y.infor,fill=Label,color = Label),show.legend = F, 
+                     height=1.5,
+                     color = color.pals[1:length(unique(dat.plot$Label))],
+                     fill = color.pals[1:length(unique(dat.plot$Label))],
+                     alpha = 0.6,
+                     width=0.9)+
   ggplot2::guides(size= ggplot2::guide_legend(title="Count"))+ 
   ggplot2::labs(x=NULL,y="log2 Fold change",
-                subtitle = paste0("|log2FC|>=",log2(cutoff_fc)," & p value<",cutoff_p))+
+                subtitle = paste0("|log2FC|>=",round(log2(cutoff_fc),3)," & p value<",cutoff_p))+
   ggplot2::geom_text(dat.infor,mapping= ggplot2::aes(x.local,y.infor,label=Label),show.legend = F)+
   
   ggplot2:: geom_text(data = dat.count |> dplyr:: filter(significance == "up"), 
@@ -190,35 +186,41 @@ plt.vol2=
                       vjust = 1, hjust = 0.5, size = 3, color = "#A40000", inherit.aes = FALSE) +
   ggplot2::geom_text(data = dat.count |> dplyr:: filter(significance == "down"), 
                      ggplot2::aes(x = x.local, y = -Inf, label  = paste0("n(down)=",cout)), 
-                     vjust = -1, hjust =0.5  , size = 3, color = "#4874CB", inherit.aes = FALSE) +
-  ggrepel::geom_label_repel(dat.marked.up,mapping= ggplot2::aes(x.local,log2FC,label=Protein,color=significance),
-                            force = 2,size=2, 
-                            show.legend = F,
-                            max.overlaps = max_overlaps,
-                            seed = 233,
-                            min.segment.length = 0,
-                            force_pull = 2,
-                            box.padding = 0.1,
-                            segment.linetype = 3, 
-                            segment.color = 'black', 
-                            segment.alpha = 0.5, 
-                            direction = "x", 
-                            #nudge_y = log2Foldchang,
-                            hjust = 0.5)+
-  ggrepel::geom_label_repel(dat.marked.down,mapping= ggplot2::aes(x.local,log2FC,label=Protein,color=significance),
-                            show.legend = F,
-                            force = 2,size=2, 
-                            max.overlaps = max_overlaps,
-                            seed = 233,
-                            min.segment.length = 0,
-                            force_pull = 2,
-                            box.padding = 0.1,
-                            segment.linetype = 3, 
-                            segment.color = 'black', 
-                            segment.alpha = 0.5, 
-                            #nudge_y = -log2Foldchang,
-                            direction = "x", 
-                            hjust = 0.5)+
+                     vjust = -1, hjust =0.5  , size = 2, color = "#4874CB", inherit.aes = FALSE) +
+  ggrepel::geom_text_repel(dat.marked.up,mapping= ggplot2::aes(x.local,log2FC,label=Protein),
+                           color="#d56e5e",
+                           #force = 0.5,
+                           size=2, 
+                           show.legend = F,
+                           max.overlaps = max_overlaps,
+                           seed = 233,
+                           min.segment.length = 0.2,
+                           force_pull = 2,
+                           box.padding = 0.1,
+                           segment.linetype = 1, 
+                           segment.color = 'black', 
+                           segment.alpha = 0.5, 
+                           # direction = "y", 
+                           nudge_y = log2(cutoff_fc),
+                           #hjust = 0.5
+  )+
+  ggrepel::geom_text_repel(dat.marked.down,mapping= ggplot2::aes(x.local,log2FC,label=Protein),
+                           color="#5390b5",
+                           show.legend = F,
+                           # force = 0.5,
+                           size=2, 
+                           max.overlaps = max_overlaps,
+                           seed = 233,
+                           min.segment.length = 0.2,
+                           #force_pull = 2,
+                           box.padding = 0.1,
+                           segment.linetype = 1, 
+                           segment.color = 'black', 
+                           segment.alpha = 0.5, 
+                           nudge_y = -log2(cutoff_fc),
+                           #direction = "y", 
+                           #hjust = 0.5
+  )+
   ggplot2::theme_classic()+
   ggplot2::theme(
     axis.ticks.x =  ggplot2::element_blank(),

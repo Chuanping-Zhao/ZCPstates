@@ -9,8 +9,8 @@ easypca(
   sample.id = "File ID",
   mutigoup.id = c("gender", "age_range"),
   scaling = "pareto",
-  procomp.center = T,
-  procomp.scale = T,
+  procomp.center = TRUE,
+  procomp.scale = FALSE,
   pointsize = 1.5
 )
 }
