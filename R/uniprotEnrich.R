@@ -166,7 +166,7 @@ uniprotEnrich=function(
         #
         proteincounts.merged$diff.proteincounts=subject_protein
 
-        result=data.table::as.data.table(proteincounts.merged)[, p_value := 1 - stats::phyper(
+        result=data.table::as.data.table(proteincounts.merged)[, p_value :=  stats::phyper(
           proteincounts.per.pahtway.diff - 1,
           diff.proteincounts,
           background.proteincounts - diff.proteincounts,
@@ -238,7 +238,7 @@ uniprotEnrich=function(
 
         proteincounts.merged$diff.proteincounts=subject_protein
 
-        result=data.table::as.data.table(proteincounts.merged)[, p_value := 1 - stats::phyper(
+        result=data.table::as.data.table(proteincounts.merged)[, p_value := stats::phyper(
           proteincounts.per.pahtway.diff - 1,
           diff.proteincounts,
           background.proteincounts - diff.proteincounts,
