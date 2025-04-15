@@ -124,7 +124,12 @@ easypca=function(df,
       color_palettes= c(
         "#00ABF0", "#39B243", "#25848E", "#34618DFF", "#CB3E71FF",
         "#440154FF", "#E54C5E", "#EE822F", "#B5379A", "#CC2020",
-        "#0505E7", "#A50021"
+        "#0505E7", "#A50021", "palevioletred3", "#ceca7c", "#c59fc9",
+        "#84b59f", "cornflowerblue", "salmon3","#5698c4", "#d88c9a",
+        "#3b374c", "#44598e", "#64a0c0", "#7ec4b7", "#deebcd","#073f82",
+        "#1b71b4", "#58a4cf", "#a2cbe3", "#f2f9fe","#492952", "#82677e",
+        "#053061", "#2166AC", "#4393C3", "#92C5DE", "#D1E5F0", "#F7F7F7"
+        , "#FDDBC7", "#F4A582", "#D6604D", "#B2182B", "#67001F"
       )
 
       purrr::map(group_vars, function(group) {#group="gender"
