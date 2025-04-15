@@ -35,9 +35,9 @@
 #' res$plot  # Show the plot
 #'
 #' @importFrom ggplot2 ggplot aes geom_tile geom_text labs theme theme_classic element_text element_blank element_line element_rect scale_fill_gradient2 scale_x_discrete scale_y_discrete
-#' @importFrom reshape2 melt
 #' @importFrom grid unit
 #' @importFrom crayon yellow
+#' @importFrom dplyr rename filter
 #' @export
 #'
 heatmap_cor <- function(x,
@@ -101,7 +101,14 @@ heatmap_cor <- function(x,
 
   switch (Type,
           "upper_tri" = {
-            corvalue_plot <- reshape2::melt(get_upper_tri(corvalue), na.rm = TRUE) #|> filter(Var2==vars_filter)
+            #corvalue_plot <- reshape2::melt(get_upper_tri(corvalue), na.rm = TRUE)
+            corvalue_plot <- get_upper_tri(corvalue) |>
+              as.table() |>
+              as.data.frame() |>
+              dplyr::filter(!is.na(Freq)) |>
+              dplyr::rename(Var1 = Var1, Var2 = Var2, value = Freq)
+
+
             Figcor <- ggplot2::ggplot(corvalue_plot, ggplot2::aes(x=Var1, y=Var2, fill=value)) +
               ggplot2::geom_tile(color = geom_tile_color,size=geom_tile_text_size) +
               ggplot2::theme_classic() +
@@ -130,7 +137,13 @@ heatmap_cor <- function(x,
               ggplot2::scale_x_discrete(position = "top")
           },
           "lower_tri"={#获得右下角的数据
-            corvalue_plot <- reshape2::melt(get_lower_tri(corvalue), na.rm = TRUE)#|> filter(Var2==vars_filter)
+            #corvalue_plot <- reshape2::melt(get_lower_tri(corvalue), na.rm = TRUE)#|> filter(Var2==vars_filter)
+            corvalue_plot <- get_lower_tri(corvalue) |>
+              as.table() |>
+              as.data.frame() |>
+              dplyr::filter(!is.na(Freq)) |>
+              dplyr::rename(Var1 = Var1, Var2 = Var2, value = Freq)
+
             Figcor <-  ggplot2::ggplot(corvalue_plot,  ggplot2::aes(x=Var1, y=Var2, fill=value)) +
               ggplot2::geom_tile(color = geom_tile_color,size=geom_tile_text_size) +
               ggplot2::theme_classic() +
@@ -156,7 +169,13 @@ heatmap_cor <- function(x,
               ggplot2::scale_y_discrete(position = "right")
           },
           "Full"={#全部矩阵
-            corvalue_plot <- reshape2::melt(get_all(corvalue), na.rm = TRUE)#|> filter(Var2==vars_filter)
+           # corvalue_plot <- reshape2::melt(get_all(corvalue), na.rm = TRUE)#|> filter(Var2==vars_filter)
+            corvalue_plot <- get_all(corvalue) |>
+              as.table() |>
+              as.data.frame() |>
+              dplyr::filter(!is.na(Freq)) |>
+              dplyr::rename(Var1 = Var1, Var2 = Var2, value = Freq)
+
             Figcor <-  ggplot2::ggplot(corvalue_plot,  ggplot2::aes(x=Var1, y=Var2, fill=value)) +
               ggplot2::geom_tile(color = geom_tile_color,size=geom_tile_text_size) +
               ggplot2::theme_classic() +

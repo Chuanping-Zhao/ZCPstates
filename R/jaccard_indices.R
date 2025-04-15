@@ -36,9 +36,8 @@
 #' fontsize=2)
 #' res$plot  #View the heatmap
 #'
-#' @importFrom dplyr filter
+#' @importFrom dplyr filter rename
 #' @importFrom rlang sym
-#' @importFrom reshape2 melt
 #' @importFrom ggplot2 ggplot aes geom_tile scale_x_discrete scale_y_discrete
 #' @importFrom ggplot2 theme_classic theme labs element_text element_line element_blank
 #' @importFrom ggplot2 scale_fill_gradient2 geom_text
@@ -104,7 +103,18 @@ jaccard_indices=function(dt,
     return(mat)
   }
   #获得右下角矩阵数据
-  jaccard_indices_plot = reshape2::melt(get_lower_tri(jaccard_indices), na.rm = TRUE)
+  #jaccard_indices_plot = reshape2::melt(get_lower_tri(jaccard_indices), na.rm = TRUE)
+
+
+  jaccard_indices_plot= get_lower_tri(jaccard_indices) |>
+    as.table() |>
+    as.data.frame() |>
+    dplyr::filter(!is.na(Freq)) |>
+    dplyr::rename(Var1 = Var1, Var2 = Var2, value = Freq)
+
+
+
+
 
   #定义标签
   labz =unique(jaccard_indices_plot$Var1)

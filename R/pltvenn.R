@@ -53,7 +53,9 @@ pltvenn= function(dat_long, group.by = "sample", proteincol.id = "Accession",fil
     dplyr::ungroup()
 
   #色
-  my_fin_colors <- c("#BE507E", "#ED7D31", "#9183BA", "#C00000", "#29719D","#BE507E", "#ED7D31", "#9183BA", "#C00000", "#29719D")
+  my_fin_colors <-   c("turquoise3", "palevioletred3", "#ceca7c", "#c59fc9", "#84b59f", "cornflowerblue", "salmon3","#5698c4", "#d88c9a")
+
+    # c("#BE507E", "#ED7D31", "#9183BA", "#C00000", "#29719D","#BE507E", "#ED7D31", "#9183BA", "#C00000", "#29719D")
 
   list_proteins <- split(proteins[[proteincol.id]], proteins[[group.by]])
 
