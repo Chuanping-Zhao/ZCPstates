@@ -34,7 +34,7 @@ A data.table of differential expression results across all proteins, including:
 \itemize{
 \item \code{Protein}: Protein ID
 \item \code{Label}: Contrast label (e.g. "A_vs_B")
-\item \code{logFC}: Estimated log2 fold change from linear model
+\item \code{log2FC}: Estimated log2 fold change from linear model
 \item \code{SE}: Standard error
 \item \code{Tvalue}: t statistic
 \item \code{DF}: Residual degrees of freedom
@@ -68,8 +68,8 @@ Run = paste0("Sample", 1:6),
 Condition = c("A", "A", "A", "B", "B", "B"),
 BioReplicate = paste0("R", 1:6)
 )
-comparison=generate_comparison_matrix(sampleInfo, 
-group_col = "Condition", 
+comparison=generate_comparison_matrix(sampleInfo,
+group_col = "Condition",
 force_denominator = NULL)
 
 result <- easydiff2(

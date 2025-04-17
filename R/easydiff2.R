@@ -1,6 +1,6 @@
 #' Perform differential expression analysis on a wide-format protein matrix
 #'
-#' This function performs linear model-based group comparison on log2-intensity 
+#' This function performs linear model-based group comparison on log2-intensity
 #' proteomics data. It automatically reshapes the input data, merges sample annotations,
 #' handles missing value filtering, and fits fixed-effect linear models for each protein.
 #'
@@ -15,7 +15,7 @@
 #' @return A data.table of differential expression results across all proteins, including:
 #' - `Protein`: Protein ID
 #' - `Label`: Contrast label (e.g. "A_vs_B")
-#' - `logFC`: Estimated log2 fold change from linear model
+#' - `log2FC`: Estimated log2 fold change from linear model
 #' - `SE`: Standard error
 #' - `Tvalue`: t statistic
 #' - `DF`: Residual degrees of freedom
@@ -42,8 +42,8 @@
 #'Condition = c("A", "A", "A", "B", "B", "B"),
 #'BioReplicate = paste0("R", 1:6)
 #')
-#'comparison=generate_comparison_matrix(sampleInfo, 
-#'group_col = "Condition", 
+#'comparison=generate_comparison_matrix(sampleInfo,
+#'group_col = "Condition",
 #'force_denominator = NULL)
 #'
 #' result <- easydiff2(
@@ -62,13 +62,13 @@
 #' @importFrom utils capture.output
 #' @importFrom crayon yellow
 #' @export
-#' 
-easydiff2=function( 
-                          data=protein_wide, 
-                          contrast.matrix=comparison, 
+#'
+easydiff2=function(
+                          data=protein_wide,
+                          contrast.matrix=comparison,
                           groupInfo=sampleInfo,
                           NAfilter.cutoff=NULL,
-                         save_fitted_models = TRUE, 
+                         save_fitted_models = TRUE,
                          protein.col="x",
                          log2Trans=FALSE
 ){
@@ -76,21 +76,21 @@ easydiff2=function(
   if (!protein.col %in% colnames(data)) {
     stop(paste0("The specified `protein.col` (\"", protein.col, "\") is not a valid column name in the input data.--zcp\n"))
   }
-  
+
 
   #=====检查输入的groupInfo信息是否合法，检查输入的groupInfo信息与data中样本信息是否匹配====
   .checkGroupComparisonInput <- function(groupInfo, data) {
     required_cols <- c("Run", "Condition", "BioReplicate")
-    
+
     # 检查是否包含必需列
     missing_cols <- setdiff(toupper(required_cols), toupper(colnames(groupInfo)))
     if (length(missing_cols) > 0) {
       msg <- paste0("The `groupInfo` input must include the following columns: ",
-                    paste(required_cols, collapse = ", "), 
+                    paste(required_cols, collapse = ", "),
                     ". Missing: ", paste(missing_cols, collapse = ", "), ".--zcp")
       stop(msg)
     }
-    
+
     # 检查 groupInfo$Run 是否在 data 的列名中
     unmatched_runs <- setdiff(groupInfo$Run, colnames(data))
     if (length(unmatched_runs) > 0) {
@@ -98,22 +98,22 @@ easydiff2=function(
                     paste(unmatched_runs, collapse = ", "), ".--zcp")
       stop(msg)
     }
-    
+
   }
-  
+
   .checkGroupComparisonInput(groupInfo,data)
-  
 
-  
 
-  
+
+
+
   PrepareForGroupComparison=function(summarization_output,idcols=protein.col,logTrans=log2Trans){
     #summarization_output=list(protein=data, contrast.matrix=contrast.matrix,  groupInfo=groupInfo)
     #定义动态宽转长的函数
     .reshape_protein_to_long= function(proteindata_piv, protein.cols = protein.col) {
       #protein.col设为id.vars
       id_cols = protein.cols
-      
+
       #宽转长
       long_dt = data.table::melt(
         data = proteindata_piv,
@@ -121,14 +121,14 @@ easydiff2=function(
         variable.name = "originalRUN",
         value.name = "LogIntensities"
       )
-      
+
       return(long_dt)
     }
-    
-    
+
+
     proteindata=data.table::as.data.table(summarization_output$protein)
     proteindata_piv=.reshape_protein_to_long(proteindata, protein.cols =protein.col)
-    
+
     if (idcols != "Protein") {
       if (!idcols %in% colnames(proteindata_piv)) {
         stop(paste0("Column '", idcols, "' not found in the data."))
@@ -136,38 +136,38 @@ easydiff2=function(
       data.table::setnames(proteindata_piv, old = idcols, new = "Protein")
       idcols <- "Protein"  #更新变量
     }
-    
+
     if (isFALSE(logTrans)) {
       proteindata_piv$LogIntensities = log2(proteindata_piv$LogIntensities)
     }
-    
-    
-    
-    #增加GROUP和SUBJECT信息 定义的技术重复是 GROUP_SUJECT 相同的Runs属于同一个生物分组的技术重复或者说叫生物学重复 
+
+
+
+    #增加GROUP和SUBJECT信息 定义的技术重复是 GROUP_SUJECT 相同的Runs属于同一个生物分组的技术重复或者说叫生物学重复
     Info=data.table::as.data.table(summarization_output$groupInfo)
-    data.table::setnames(Info, 
-                         old = c("Run", "Condition", "BioReplicate"), 
+    data.table::setnames(Info,
+                         old = c("Run", "Condition", "BioReplicate"),
                          new = c("originalRUN", "GROUP", "SUBJECT"))
-    
+
     #合并信息
     summarized=merge(proteindata_piv, Info, by = "originalRUN", all.x = TRUE)
     summarized[, RUN := .GRP, by = originalRUN]
     #统计每个蛋白在每组数据中中的缺失值 或者全局缺失值 然后可以作为筛选阈值
     summarized[#保证NA的唯一性
       , LogIntensities := fifelse(
-        LogIntensities == 0 | is.nan(LogIntensities), 
-        NA_real_, 
+        LogIntensities == 0 | is.nan(LogIntensities),
+        NA_real_,
         LogIntensities
       )
     ]
     summarized[#统计全局NA占比
-      , MissingPercentage := mean(is.na(LogIntensities)), 
+      , MissingPercentage := mean(is.na(LogIntensities)),
       by = Protein
     ]
     summarized[#添加NA占比超过50%的蛋白信息
       , more50missing := MissingPercentage > 0.5
     ]
-  
+
     group_missing = summarized[#按分组统计NA
       , .(
         GroupMissingPercentage = mean(is.na(LogIntensities)),
@@ -177,14 +177,14 @@ easydiff2=function(
     ]
     #合并
     summarized =merge(summarized, group_missing, by = c("Protein", "GROUP"), all.x = TRUE)
-    
-   
+
+
     output=split(summarized, summarized[, ..idcols])
     return(list(summarizatedoutput=output,ProteinLevelData=summarized))
-    
-  }  
-  
-#把每个蛋白拆成一个List 方便建模  
+
+  }
+
+#把每个蛋白拆成一个List 方便建模
 split_summarized = PrepareForGroupComparison(summarization_output=list(protein=data, contrast.matrix=contrast.matrix,  groupInfo=groupInfo),idcols=protein.col,logTrans=log2Trans)$summarizatedoutput
 ProteinLevelData=PrepareForGroupComparison(summarization_output=list(protein=data, contrast.matrix=contrast.matrix,  groupInfo=groupInfo),idcols=protein.col,logTrans=log2Trans)$ProteinLevelData
 
@@ -193,17 +193,17 @@ if(!is.null(NAfilter.cutoff)){
   keep_flags= purrr::map_lgl(split_summarized, function(x) {
     max(x$MissingPercentage, na.rm = TRUE) <= 0.5
   })
-  
+
   filted_split_summarized =split_summarized[keep_flags]
   removed_proteins = names(split_summarized)[!keep_flags]
-  
+
   message(
     "🧪 Protein filtering applied based on missing value cutoff (", NAfilter.cutoff, ").--zcp\n",
     "🚫 Proteins removed due to high missingness: ", length(removed_proteins),"--zcp\n",
     crayon::yellow( "✅ Proteins kept for modeling: ", sum(keep_flags), "--zcp\n")
   )
-  
-  
+
+
 }else{
   filted_split_summarized =split_summarized
   message(crayon::yellow("ℹ️ No missing value filtering applied. All proteins included for modeling.--zcp\n"))
@@ -213,7 +213,7 @@ if(!is.null(NAfilter.cutoff)){
 
 .checkRepeatedDesign = function(proteinleveldata) {#检查数据格式
   SUBJECT = GROUP = NULL
-  
+
   input = as.data.table(proteinleveldata)
   subject_by_group = table(input[, list(SUBJECT, GROUP)])
   subject_appearances = apply(subject_by_group, 1, function(x) sum(x >  0))
@@ -223,19 +223,19 @@ if(!is.null(NAfilter.cutoff)){
   } else {
     cat(crayon::yellow("Case control design of experiment\n"))
   }
- 
+
   repeated
 }
 repeated=.checkRepeatedDesign(ProteinLevelData)
 
 
-  
-  
+
+
 #为差异分析做准备
 #single_protein=split_summarized$A0A075B6H7
-.prepareSingleProteinForGC = function(single_protein) { 
+.prepareSingleProteinForGC = function(single_protein) {
   ABUNDANCE = GROUP = SUBJECT = RUN = NULL
-  
+
   data.table::setnames(single_protein,#列名一致
                        c("LogIntensities"),
                        c("ABUNDANCE"),
@@ -245,12 +245,12 @@ repeated=.checkRepeatedDesign(ProteinLevelData)
   single_protein[, SUBJECT := factor(SUBJECT)]
   single_protein[, RUN := factor(RUN)]
   return(single_protein)
-}  
-  
-  
+}
+
+
 .checkSingleSubject = function(input) {#RUN代表技术流程 比如TMT 一个RUN可能存在多个通道的样本 labelfree的实验中一个RUN就是一个样本
   SUBJECT = GROUP = NULL
-  
+
   unique_annot = unique(input[, list(GROUP, SUBJECT)])
   subject_counts = unique_annot[, list(NumSubjects = data.table::uniqueN(SUBJECT)),
                                 by = "GROUP"]
@@ -260,7 +260,7 @@ repeated=.checkRepeatedDesign(ProteinLevelData)
 
 .checkTechReplicate = function(input) {#SUBJECT其实是生物学重复 比如labelfree中GROUP=A的组中 跑了3个生物学重复 那对应的SUBJECT就是A1 A2 A3
   GROUP = RUN = SUBJECT = NULL
-  
+
   unique_annot = unique(input[, list(RUN,
                                      SUBJECT_NESTED = paste(GROUP,
                                                             SUBJECT,
@@ -276,17 +276,17 @@ repeated=.checkRepeatedDesign(ProteinLevelData)
 fixmode_ttest = function(single_protein, contrast.matrix) {
   #因子化GROUP和改列名
   input =  .prepareSingleProteinForGC(single_protein)
-  
+
   #固定效应模型
   full_fit =  lm(ABUNDANCE ~ GROUP, data = input,contrasts = list(GROUP = contr.treatment))
   beta = coef(full_fit)
   vcov_mat =  vcov(full_fit)
   df =  full_fit$df.residual
-  
+
   #group level顺序和对比矩阵列名一致
   group_levels= levels(input$GROUP)
   contrast.matrix.order= contrast.matrix[, group_levels, drop = FALSE]
-  
+
   #每个组的模型估计均值
   group_means= setNames(numeric(length(group_levels)), group_levels)
   for (grp in group_levels) {
@@ -297,14 +297,14 @@ fixmode_ttest = function(single_protein, contrast.matrix) {
       group_means[grp] <- beta["(Intercept)"] + beta[coef_name]
     }
   }
-  
+
   #批量计算所有的对比结果
   results =  lapply(rownames(contrast.matrix.order), function(contrast_name) {
     contrast_vector <- contrast.matrix.order[contrast_name, ]
-    
+
     # group_means计算 logFC
     logFC =  sum(group_means[names(contrast_vector)] * contrast_vector)
-    
+
     #L 向量 估算标准误
     L =  setNames(numeric(length(beta)), names(beta))
     for (grp in names(contrast_vector)) {
@@ -319,23 +319,23 @@ fixmode_ttest = function(single_protein, contrast.matrix) {
         }
       }
     }
-    
+
     #计算标准误差、T值、P值
     SE=sqrt(t(L) %*% vcov_mat %*% L)
     Tvalue=logFC / SE
     pvalue=2 * pt(abs(Tvalue), df = df, lower.tail = FALSE)#双尾t 非靶是只需要查看偏离程度 无论上下调 如果事先就假设A组的蛋白比B组的高 这个时候选择单位
-    
+
     data.table::data.table(
       Protein = unique(input$Protein),
       Label = contrast_name,
-      logFC = as.numeric(logFC),
+      log2FC = as.numeric(logFC),
       SE = as.numeric(SE),
       Tvalue = as.numeric(Tvalue),
       DF = df,
       pvalue = as.numeric(pvalue)
     )
   })
-  
+
   final_result=data.table::rbindlist(results)
   final_result[, adj.pvalue := p.adjust(pvalue, method = "BH")]
   return(final_result)
