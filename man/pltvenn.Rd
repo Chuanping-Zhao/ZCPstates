@@ -8,6 +8,7 @@ pltvenn(
   dat_long,
   group.by = "sample",
   proteincol.id = "Accession",
+  fill.colors = NULL,
   fill.alpha = 0.3,
   type = c("ellipse", "circle")[1]
 )
@@ -23,6 +24,8 @@ protein identifiers (\code{proteincol.id}).}
 \item{proteincol.id}{A character string specifying the column name for protein identifiers
 (default is "Accession"). This column will be used to identify unique proteins in the
 Venn diagram.}
+
+\item{fill.colors}{Character. Color for venn plot. Default is \code{NULL}.}
 
 \item{fill.alpha}{A numeric value between 0 and 1 that controls the transparency of the
 fill color in the Venn diagram (default is 0.3).}

@@ -15,6 +15,7 @@
 #'   Venn diagram.
 #' @param fill.alpha A numeric value between 0 and 1 that controls the transparency of the
 #'   fill color in the Venn diagram (default is 0.3).
+#' @param fill.colors Character. Color for venn plot. Default is `NULL`.
 #' @param type plotting ellipse or circle(default is ellipse).
 #'
 #' @return A Venn diagram (Euler diagram) plot generated using the `eulerr` package. The plot
@@ -40,7 +41,9 @@
 #'
 #' @export
 #'
-pltvenn= function(dat_long, group.by = "sample", proteincol.id = "Accession",fill.alpha=0.3,type=c("ellipse","circle")[1]){
+pltvenn= function(dat_long, group.by = "sample", proteincol.id = "Accession",
+                  fill.colors=NULL,
+                  fill.alpha=0.3,type=c("ellipse","circle")[1]){
 
   #使用 sym() 和 !! 来动态引用列名
   group_col <- rlang::sym(group.by)
@@ -53,7 +56,14 @@ pltvenn= function(dat_long, group.by = "sample", proteincol.id = "Accession",fil
     dplyr::ungroup()
 
   #色
-  my_fin_colors <-   c("turquoise3", "palevioletred3", "#ceca7c", "#c59fc9", "#84b59f", "cornflowerblue", "salmon3","#5698c4", "#d88c9a")
+  if(!is.null(fill.colors)){
+    my_fin_colors=fill.colors
+  }else{
+
+  my_fin_colors = c("turquoise3", "palevioletred3", "#ceca7c", "turquoise3", "palevioletred3", "#ceca7c")
+}
+
+
 
     # c("#BE507E", "#ED7D31", "#9183BA", "#C00000", "#29719D","#BE507E", "#ED7D31", "#9183BA", "#C00000", "#29719D")
 
@@ -62,7 +72,7 @@ pltvenn= function(dat_long, group.by = "sample", proteincol.id = "Accession",fil
   #绘
   proteins_venn <- plot(eulerr::euler(list_proteins, shape =type), # ellipse   circle
                         quantities = list(type = c("counts", "percent"),cex=0.8),
-                        labels = list(font =2,col=my_fin_colors,cex=1.2),# font=1 2 3 4代表集合标签 普通文本 加粗文本 斜体文本 斜体加粗文本
+                        labels = list(font =2,col="black",cex=1.2),# font=1 2 3 4代表集合标签 普通文本 加粗文本 斜体文本 斜体加粗文本
                         fill = my_fin_colors,
                         edges=TRUE,#是否增加线条颜色
                         #edge_col= my_fin_colors ,
