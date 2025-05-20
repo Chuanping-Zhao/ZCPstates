@@ -24,18 +24,24 @@
 #' @importFrom dplyr bind_rows
 #' @importFrom purrr map
 #' @importFrom stringr str_extract
-#' @importFrom tibble tibble
 #' @export
+#'
+#' @examples
+#' # Example of extracting information from a FASTA file:
+#' \dontrun{
+#' fasta_info <- Fasta_extract("uniprotkb_proteome_UP000005640_AND_revi_2024_02_17.fasta")
+#' }
 #'
 Fasta_extract=function(fasta.path="uniprotkb_proteome_UP000005640_AND_revi_2024_02_17.fasta"){
 fasta=Biostrings::readAAStringSet(fasta.path)
 #fasta.test=fasta[1]
+#names_info = names(fasta)[19218] ERVK容易出Bug的地方 还有KRTAP1 names_info = names(fasta)[16908]  names_info = names(fasta)[14851]
 fatsaLibs <- purrr::map(names(fasta), ~{
   names_info = .x
   #提取UniProt ID
   uniprot_id =  sub("^sp\\|([A-Za-z0-9]+)\\|.*", "\\1",names_info)
   #提取Gene Name
-  gene_name = sub(".*GN=([A-Za-z0-9_]+).*", "\\1",names_info)
+  gene_name =sub(".*GN=([^ ]+).*", "\\1", names_info)
   #提取Gene Description   sub(".*_HUMAN\\s*(.*?)\\s*OS=.*", "\\1",names_info)
   gene_description =sub("^sp\\|[^|]*\\|[^ ]+\\s+(.*?)\\s+OS=.*", "\\1", names_info)  |>
     trimws()
