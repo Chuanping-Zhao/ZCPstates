@@ -60,9 +60,14 @@ getHPP = function(dest_dir =getwd(), technology=c("immunoassay","ms")[2],verbose
   })
 
   if (verbose) message("📦 Unzipping file...--zcp")
+
+
+  existing_tsv = list.files(dest_dir, pattern = "\\.tsv$", full.names = TRUE)
   unzip(zip_path, exdir = dest_dir)
-  tsv_file = list.files(dest_dir, pattern = "\\.tsv$", full.names = TRUE)
-  if (length(tsv_file) == 0) stop("No .tsv file found after unzip.--zcp")
+  all_tsv = list.files(dest_dir, pattern = "\\.tsv$", full.names = TRUE)
+  tsv_file =setdiff(all_tsv, existing_tsv)
+  if (length(tsv_file) == 0) stop("No new .tsv file found after unzip.--zcp")
+
 
   if(technology=="ms"){
   HPP =data.table::fread(tsv_file[1])
