@@ -86,7 +86,7 @@ getHPP = function(dest_dir =getwd(), technology=c("immunoassay","ms")[2],verbose
     file.remove(tsv_file)
   })
   #load("HumanFastaLibs.rda")
-  data("HumanFastaLibs", envir = environment())
+  utils::data("HumanFastaLibs", package = "ZCPstates", envir = environment())
   data.table::setDT(HPP)
   data.table::setDT(HumanFastaLibs)
   HPP_annotated= merge(HPP, HumanFastaLibs, by = "Gene", all.x = TRUE)

@@ -58,3 +58,9 @@
 #' }
 #'@source Example data
 "Glycan_network_demo"
+
+#' @title Human FASTA Mapping Table
+#' @description UniProt-Gene-Description mapping from Human UniProt FASTA.
+#' @format A data.frame with columns: \code{Entry}, \code{Gene}, \code{Description}
+#' @source Custom generated from UniProt FASTA file
+"HumanFastaLibs"
