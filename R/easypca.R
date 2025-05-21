@@ -70,15 +70,15 @@
 #' @export
 #'
 easypca=function(df,
-             sample.id="File ID",
-             #group.id="gender",
-             mutigoup.id=c("gender","age_range"),#如果mutigroup=T 就需要指定
-             scaling="pareto", # pareto uv logtrans noop无任何操作
-             procomp.center=TRUE,
-             procomp.scale=FALSE,
-             pointsize=1.5
+                 sample.id="File ID",
+                 #group.id="gender",
+                 mutigoup.id=c("gender","age_range"),#如果mutigroup=T 就需要指定
+                 scaling="pareto", # pareto uv logtrans noop无任何操作
+                 procomp.center=TRUE,
+                 procomp.scale=FALSE,
+                 pointsize=1.5
 ){
-
+  
   #定义scaling
   if (is.null(scaling)) {
     cal =function(x){(x-mean(x, na.rm = T))/sd(x, na.rm = T)}#uv
@@ -91,137 +91,160 @@ easypca=function(df,
   }else if(scaling=="noop"){
     cal=function(x){ifelse(is.na(x), NA, x)}
   }
-
-
-
-  samplecol <- sym(sample.id)
-
-
-    #如果矩阵中存在多种分组方案 需要指出这些分组方案的列名 否则抛出错误
-   # if(length(unique(mutigoup.id))<2){stop("The column names provided for the `mutigoup.id` are fewer than 2. Please set `mutigoup.id=FALSE`.--zcp")}
-    #然后判断提供的分组列名信息是否存在
-    if(!all(mutigoup.id %in% colnames(df))){stop("The column names provided for the `mutigoup.id` are not in `colnames(df)`. Please check it.--zcp")}
-    #去掉样本id和分组id计算pca
-    plot.dat <- df  |>
-      dplyr::select(!dplyr::all_of(c(as.character(samplecol),mutigoup.id)))  |>
-      dplyr:: mutate( dplyr::across( dplyr::everything(), as.numeric))
-
-    plot.dat=as.data.frame(apply(plot.dat, 2, cal))
-
-    plot.dat[is.na(plot.dat)]=0
-
-    #提取group信息 提取sample信息
-    groupInfo=df |> dplyr::select(dplyr::all_of(c(as.character(samplecol),mutigoup.id)))
-
-    group =df  |> dplyr::select(dplyr::all_of(mutigoup.id))
-    plot.dat = plot.dat[, apply(plot.dat, 2, sd, na.rm = TRUE) > 0]#保留sd不为0的数
-    pca=prcomp(plot.dat, center =procomp.center, scale. =procomp.scale)
-    pca.data = data.frame(pca$x) |> cbind(groupInfo) |> dplyr::select(dplyr::any_of(colnames(group)),dplyr::everything())#return
-    pca.variance= pca$sdev^2 / sum(pca$sdev^2)
-
-
-    generate_pca_plots = function(pca_data, group_vars, variance, sample_col, pointsize) {
-      color_palettes= c(
-        "#00ABF0", "#39B243", "#25848E", "#34618DFF", "#CB3E71FF",
-        "#440154FF", "#E54C5E", "#EE822F", "#B5379A", "#CC2020",
-        "#0505E7", "#A50021", "palevioletred3", "#ceca7c", "#c59fc9",
-        "#84b59f", "cornflowerblue", "salmon3","#5698c4", "#d88c9a",
-        "#3b374c", "#44598e", "#64a0c0", "#7ec4b7", "#deebcd","#073f82",
-        "#1b71b4", "#58a4cf", "#a2cbe3", "#f2f9fe","#492952", "#82677e",
-        "#053061", "#2166AC", "#4393C3", "#92C5DE", "#D1E5F0", "#F7F7F7"
-        , "#FDDBC7", "#F4A582", "#D6604D", "#B2182B", "#67001F"
-      )
-
-      purrr::map(group_vars, function(group) {#group="gender"
-        #计算椭圆数据
-        #  ellipse_data <- pca_data |>
-        #   dplyr::group_by(!!rlang::sym(group)) |>
-        #   dplyr::summarize(ggplot2::StatEllipse$compute_group(
-        #   data = data.frame(x = PC1, y = PC2),
-        #   scales = list(),
-        #   level = 0.95
-        #  ))
-
-        #内置函数计算置信区间
-        .compute_ellipse_points = function(df, x_col, y_col, group_col, level = 0.95) {
-          ellipse_data <- df  |>
-            dplyr::group_by(!!rlang::sym(group_col)) |>
-            dplyr::summarise(ellipse = list(ggplot2::StatEllipse$compute_group(
-              data = tibble(x = !!rlang::sym(x_col), y = !!rlang::sym(y_col)),
-              scales = NULL,
-              level = level
-            )), .groups = "drop")  |>
-            tidyr::unnest(cols = c(ellipse))
-
-          return(ellipse_data)
-        }
-        #计算
-        ellipse_data = .compute_ellipse_points(
-          df = pca_data,
-          x_col = "PC1",
-          y_col = "PC2",
-          group_col = group
-        )
-
-        #计算 x 和 y 轴范围
-        x_min=  min(ellipse_data$x, na.rm = TRUE)
-        x_max =  max(ellipse_data$x, na.rm = TRUE)
-        y_min=  min(ellipse_data$y, na.rm = TRUE)
-        y_max =  max(ellipse_data$y, na.rm = TRUE)
-
-        #计算 buffer，避免边界贴近图像
-        buffer_x= (x_max - x_min) * 0.01
-        buffer_y=  (y_max - y_min) * 0.01
-
-        ggplot2::ggplot(data = pca_data, mapping = ggplot2::aes(
-          x = PC1, y = PC2,
-          fill =  !!rlang::sym(group),
-          color =  !!rlang::sym(group)
-        )) +
-          ggplot2::stat_ellipse(linewidth = 0.5, level = 0.95, geom = "polygon", alpha = 0.1,color=NA) +
-          ggplot2::geom_point(size = pointsize) +
-          ggplot2::theme_bw() +
-          ggplot2::scale_color_manual(values = color_palettes) +
-          ggplot2::scale_fill_manual(values = color_palettes) +
-          ggplot2::labs(
-            x = paste0("PC1: ", signif(variance[1] * 100, 3), "%"),
-            y = paste0("PC2: ", signif(variance[2] * 100, 3), "%"),
-            title = "PCA Analysis"
-          ) +
-          ggplot2::theme(
-            plot.title = ggplot2::element_text(hjust = 0.5),
-            plot.background = ggplot2::element_rect(fill = "white", color = NA),
-            panel.background = ggplot2::element_rect(fill = "white", color = NA),
-            panel.grid.major = ggplot2::element_blank(),
-            panel.grid = ggplot2::element_blank(),
-            panel.ontop = FALSE
-          ) +
-          ggplot2::geom_text(ggplot2::aes(label = !!rlang::sym(sample_col)),# color = !!rlang::sym(mutigoup.id[1])),
-                             check_overlap = T,
-                             show.legend = FALSE, vjust = -0.5, size = 2) +
-          ggplot2::xlim(x_min - buffer_x, x_max + buffer_x) +
-          ggplot2::ylim(y_min - buffer_y, y_max + buffer_y)
-
-
-      }) |> stats::setNames(group_vars)
-    }
-
-
-    plot_list <- generate_pca_plots(
-      pca_data = pca.data,
-      group_vars = mutigoup.id,
-      variance = pca$sdev^2 / sum(pca$sdev^2),
-      sample_col = sample.id,
-      pointsize = pointsize
+  
+  
+  
+  samplecol <- rlang::sym(sample.id)
+  
+  
+  #如果矩阵中存在多种分组方案 需要指出这些分组方案的列名 否则抛出错误
+  # if(length(unique(mutigoup.id))<2){stop("The column names provided for the `mutigoup.id` are fewer than 2. Please set `mutigoup.id=FALSE`.--zcp")}
+  #然后判断提供的分组列名信息是否存在
+  if(!all(mutigoup.id %in% colnames(df))){stop("The column names provided for the `mutigoup.id` are not in `colnames(df)`. Please check it.--zcp")}
+  #去掉样本id和分组id计算pca
+  plot.dat <- df  |>
+    dplyr::select(!dplyr::all_of(c(as.character(samplecol),mutigoup.id)))  |>
+    dplyr:: mutate( dplyr::across( dplyr::everything(), as.numeric))
+  
+  plot.dat=as.data.frame(apply(plot.dat, 2, cal))
+  
+  plot.dat[is.na(plot.dat)]=0
+  
+  #提取group信息 提取sample信息
+  groupInfo=df |> dplyr::select(dplyr::all_of(c(as.character(samplecol),mutigoup.id)))
+  
+  group =df  |> dplyr::select(dplyr::all_of(mutigoup.id))
+  plot.dat = plot.dat[, apply(plot.dat, 2, sd, na.rm = TRUE) > 0]#保留sd不为0的数
+  pca=prcomp(plot.dat, center =procomp.center, scale. =procomp.scale)
+  pca.data = data.frame(pca$x) |> cbind(groupInfo) |> dplyr::select(dplyr::any_of(colnames(group)),dplyr::everything())#return
+  pca.variance= pca$sdev^2 / sum(pca$sdev^2)
+  
+  
+  generate_pca_plots = function(pca_data, group_vars, variance, sample_col, pointsize) {
+    color_palettes= c(
+      "#25848E", "#34618DFF", "#CB3E71FF",
+      "#440154FF", "#E54C5E", "#EE822F", "#B5379A", "#CC2020",
+      "#0505E7", "#A50021", "palevioletred3", "#ceca7c", "#c59fc9",
+      "#84b59f", "cornflowerblue", "salmon3","#5698c4", "#d88c9a",
+      "#3b374c", "#44598e", "#64a0c0", "#7ec4b7", "#deebcd","#073f82",
+      "#1b71b4", "#58a4cf", "#a2cbe3", "#f2f9fe","#492952", "#82677e",
+      "#00ABF0", "#39B243",
+      "#053061", "#2166AC", "#4393C3", "#92C5DE", "#D1E5F0", "#F7F7F7"
+      , "#FDDBC7", "#F4A582", "#D6604D", "#B2182B", "#67001F"
     )
-
-    return(list(
-      pca_model = pca,
-      pca_data = pca.data,
-      plots = plot_list
-    ))
-
-
-
+    
+    purrr::map(group_vars, function(group) {#group="Species"
+      #计算椭圆数据
+      #  ellipse_data <- pca_data |>
+      #   dplyr::group_by(!!rlang::sym(group)) |>
+      #   dplyr::summarize(ggplot2::StatEllipse$compute_group(
+      #   data = data.frame(x = PC1, y = PC2),
+      #   scales = list(),
+      #   level = 0.95
+      #  ))
+      
+      #内置函数计算置信区间
+      .compute_ellipse_points = function(df, x_col, y_col, group_col, level = 0.95) {
+        ellipse_data <- df  |>
+          dplyr::group_by(!!rlang::sym(group_col)) |>
+          dplyr::summarise(ellipse = list(ggplot2::StatEllipse$compute_group(
+            data = tibble::tibble(x = !!rlang::sym(x_col), y = !!rlang::sym(y_col)),
+            scales = NULL,
+            level = level
+          )), .groups = "drop")  |>
+          tidyr::unnest(cols = c(ellipse))
+        
+        return(ellipse_data)
+      }
+      #计算
+      ellipse_data = .compute_ellipse_points(
+        df = pca_data,
+        x_col = "PC1",
+        y_col = "PC2",
+        group_col = group
+      )
+      ellipse_data=ellipse_data[!is.na(ellipse_data$x), ]
+      #计算全部样本的置信区间，动态选择可视化最佳范围
+      .compute_ellipse_points_all = function(df, x_col, y_col, level = 0.95) {
+        ellipse_data1 <- df  |>
+          # dplyr::group_by(!!rlang::sym(group_col)) |>
+          dplyr::summarise(ellipse = list(ggplot2::StatEllipse$compute_group(
+            data = tibble::tibble(x = !!rlang::sym(x_col), y = !!rlang::sym(y_col)),
+            scales = NULL,
+            level = level
+          )), .groups = "drop")  |>
+          tidyr::unnest(cols = c(ellipse))
+        
+        return(ellipse_data1)
+      }
+      
+      
+      ellipse_data_all=.compute_ellipse_points_all(
+        df = pca_data,
+        x_col = "PC1",
+        y_col = "PC2"
+      )
+      
+      ellipse_data_range=ellipse_data[,c("x","y")]  |> rbind(ellipse_data_all)
+      #计算 x 和 y 轴范围
+      x_min=  min(ellipse_data_range$x, na.rm = TRUE)
+      x_max =  max(ellipse_data_range$x, na.rm = TRUE)
+      y_min=  min(ellipse_data_range$y, na.rm = TRUE)
+      y_max =  max(ellipse_data_range$y, na.rm = TRUE)
+      
+      #计算 buffer，避免边界贴近图像
+      buffer_x= (x_max - x_min) * 0.01
+      buffer_y=  (y_max - y_min) * 0.01
+      
+      ggplot2::ggplot(data = pca_data, mapping = ggplot2::aes(
+        x = PC1, y = PC2,
+        fill =  !!rlang::sym(group),
+        color =  !!rlang::sym(group)
+      )) +
+        ggplot2::stat_ellipse(linewidth = 0.5, level = 0.95, geom = "polygon", alpha = 0.1,color=NA) +
+        ggplot2::geom_point(size = pointsize) +
+        ggplot2::theme_bw() +
+        ggplot2::scale_color_manual(values = color_palettes) +
+        ggplot2::scale_fill_manual(values = color_palettes) +
+        ggplot2::labs(
+          x = paste0("PC1: ", signif(variance[1] * 100, 3), "%"),
+          y = paste0("PC2: ", signif(variance[2] * 100, 3), "%"),
+          title = "PCA Analysis"
+        ) +
+        ggplot2::theme(
+          plot.title = ggplot2::element_text(hjust = 0.5),
+          plot.background = ggplot2::element_rect(fill = "white", color = NA),
+          panel.background = ggplot2::element_rect(fill = "white", color = NA),
+          panel.grid.major = ggplot2::element_blank(),
+          panel.grid = ggplot2::element_blank(),
+          panel.ontop = FALSE
+        ) +
+        ggplot2::geom_text(ggplot2::aes(label = !!rlang::sym(sample_col)),# color = !!rlang::sym(mutigoup.id[1])),
+                           check_overlap = T,
+                           show.legend = FALSE, vjust = -0.5, size = 2) +
+        ggplot2::xlim(x_min - buffer_x, x_max + buffer_x) +
+        ggplot2::ylim(y_min - buffer_y, y_max + buffer_y)
+      
+      
+    }) |> stats::setNames(group_vars)
+  }
+  
+  
+  plot_list <- generate_pca_plots(
+    pca_data = pca.data,
+    group_vars = mutigoup.id,
+    variance = pca$sdev^2 / sum(pca$sdev^2),
+    sample_col = sample.id,
+    pointsize = pointsize
+  )
+  
+  return(list(
+    pca_model = pca,
+    pca_data = pca.data,
+    plots = plot_list
+  ))
+  
+  
+  
 }
 
