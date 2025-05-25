@@ -109,9 +109,9 @@ dat.plot=diff.result |> dplyr::mutate(Label=factor(diff.result$Label,levels = un
 
 background.dat <- data.frame(
   dat.plot |>  dplyr::group_by(Label) |> dplyr:: filter(log2FC>0) |>
-    summarise("y.localup"=max(log2FC)),
+    dplyr::summarise("y.localup"=max(log2FC)),
   dat.plot  |> dplyr:: group_by(Label) |> dplyr::filter(log2FC<0) |>
-    summarise("y.localdown"=min(log2FC)),
+    dplyr::summarise("y.localdown"=min(log2FC)),
   x.local=seq(1:length(unique(dat.plot$Label)))
 ) |> dplyr:: select(-Label.1)
 
@@ -121,7 +121,7 @@ dat.plot <- dat.plot |>   dplyr::left_join(x.number,by = "Label")
 
 #selecting top-up and top-down proteins
 dat.marked.up <- dat.plot  |>  dplyr::filter(significance=="up")  |>
-  dplyr::group_by(Label)  |> arrange(-log2FC)  |>
+  dplyr::group_by(Label)  |> dplyr::arrange(-log2FC)  |>
   dplyr::top_n(top_marker,abs(log2FC))
 dat.marked.down <- dat.plot  |>  dplyr::filter(significance=="down") |>
   dplyr::group_by(Label)  |>  dplyr::arrange(log2FC)  |>
@@ -236,9 +236,145 @@ plt.vol2=
     legend.position ="bottom",legend.justification = c(1,0)
   )
 
+#vol3
+fc_clean =diff.result[is.finite(diff.result$log2FC), c("Label", "log2FC")]
+fc_split = split(fc_clean$log2FC, fc_clean$Label)
+x_range_per_label =lapply(fc_split, function(x) {
+  x_abs <- abs(x)
+  xmax <- max(x_abs, na.rm = TRUE) + 0.2
+  xmin <- max(min(x_abs, na.rm = TRUE), 0.0001)
+  c(xmin = xmin, xmax = xmax)
+})
+x_range_df = as.data.frame(do.call(rbind, x_range_per_label))
+x_range_df$Label = rownames(x_range_df)
+rownames(x_range_df) = NULL
 
 
-result=list(pltvol1=plt_vol,pltvol2=plt.vol2,dt_vol=diff.result |>as.data.frame() |>dplyr:: filter(significance!="nosig"))
+
+get_curveData = function(xmin, xmax, fc_cutoff, p_cutoff) {
+  xValues = seq(xmin, xmax, by = 0.0001)
+  yValues = 1 / xValues + (-log10(p_cutoff))
+  data.frame(
+    xpos = c(xValues + log2(fc_cutoff), -(xValues +  log2(fc_cutoff))),
+    ypos = c(yValues, yValues)
+  )
+}
+
+curveData_list= lapply(1:nrow(x_range_df), function(i) {
+  xmin_i =x_range_df$xmin[i]
+  xmax_i = x_range_df$xmax[i]
+  label_i=x_range_df$Label[i]
+  df = get_curveData(xmin_i, xmax_i, cutoff_fc, cutoff_p)
+  df$Label=label_i
+  df
+})
+
+curveData_all =do.call(rbind, curveData_list)
+
+
+
+
+plotData =diff.result  |> 
+  dplyr::mutate(`-log10pvalue`=-log10(pvalue)) |> 
+  dplyr::mutate(
+    curveY = ifelse(log2FC > 0,
+                    1 / (log2FC - log2(cutoff_fc)) + (-log10(cutoff_p)),
+                    1 / (-log2FC - log2(cutoff_fc)) + (-log10(cutoff_p))),
+    newDiff = dplyr::case_when(#Screening for more significant differences
+      `-log10pvalue` > curveY & log2FC > log2(cutoff_fc) ~ 'up',
+      `-log10pvalue` > curveY & log2FC < -log2(cutoff_fc) ~ 'down',
+      TRUE ~ 'nosig'
+    )
+  ) |> 
+  merge(x_range_df, by = "Label")
+
+
+
+
+
+
+
+background.dat =data.frame(
+  plotData |>  dplyr::group_by(Label) |> dplyr:: filter(log2FC>0) |>
+    dplyr::summarise("y.localup"=max(log2FC)),
+  plotData  |> dplyr:: group_by(Label) |> dplyr::filter(log2FC<0) |>
+    dplyr::summarise("y.localdown"=min(log2FC)),
+  x.local=seq(1:length(unique(plotData$Label)))
+) |> dplyr:: select(-Label.1)
+
+
+x.number =background.dat  |>   dplyr:: select(Label,x.local)
+dat.plot = plotData |>   dplyr::left_join(x.number,by = "Label")
+
+#selecting top-up and top-down proteins
+dat.marked.up = plotData  |>  dplyr::filter(newDiff=="up")  |>
+  dplyr::group_by(Label)  |> dplyr::arrange(-log2FC)  |>
+  dplyr::top_n(top_marker,abs(log2FC))
+dat.marked.down =plotData  |>  dplyr::filter(significance=="down") |>
+  dplyr::group_by(Label)  |>  dplyr::arrange(log2FC)  |>
+  dplyr:: top_n(top_marker,abs(log2FC))
+dat.marked = dat.marked.up  |>  dplyr::bind_rows(dat.marked.down)
+#referring group information data
+dat.infor = background.dat  |>
+  dplyr::mutate("y.infor"=rep(0,length(Label)))
+
+down_up_counts=plotData  |>
+  dplyr:: filter(significance!="nosig")|> 
+  dplyr::group_by(Label,newDiff) |> 
+  dplyr::summarise(cout=dplyr::n())
+
+dat.count= dat.infor|>
+  dplyr::left_join(down_up_counts,by = "Label")
+
+
+
+plt_vol3=ggplot2::ggplot()+
+  ggplot2::geom_point(ggplot2::aes(x = log2FC, y = `-log10pvalue`),data = plotData  |>  dplyr::filter(newDiff == 'nosig'),size =2,color="grey70",alpha = 0.5)+
+  ggplot2::geom_point(ggplot2::aes(x = log2FC, y = `-log10pvalue`,color=newDiff),data = plotData  |>  dplyr:: filter(newDiff!= 'nosig'),size =2,alpha = 0.6)+
+  ggplot2::geom_line(data = curveData_all,  ggplot2::aes(x = xpos, y = ypos), lty = 2,  col = "grey10", lwd = 0.6) +
+  ggrepel::geom_text_repel(data = plotData |> dplyr::arrange(dplyr::desc(abs(log2FC)))  |> 
+                             dplyr::group_by(newDiff) |> 
+                             dplyr::filter(!is.infinite(log2FC)) |> 
+                             dplyr::filter(newDiff!="nosig") |> 
+                             dplyr::slice_head(n = top_marker),
+                           ggplot2::aes(x = log2FC, y = `-log10pvalue`, label = get(Feature)),
+                           force = top_marker*1.5, color = 'black', size = 3.2,
+                           point.padding = 0.5, hjust = 0.5,
+                           arrow = ggplot2::arrow(length = grid::unit(0.02, "npc"),
+                                         type = "open", ends = "last"),
+                           segment.color="black",
+                           segment.size = 0.3,
+                           nudge_x = 0,
+                           nudge_y = 1)+
+  ggplot2:: geom_text(data = down_up_counts |> dplyr:: filter(newDiff == "up"),
+                      ggplot2::aes(x = Inf, y = Inf, label = paste0("n(up)=",cout)),
+                      vjust = 2, hjust = 1, size = 3, color = "#B43F53", inherit.aes = FALSE) +
+  ggplot2::geom_text(data = down_up_counts |> dplyr:: filter(newDiff == "down"),
+                     ggplot2::aes(x = -Inf, y = Inf, label  = paste0("n(down)=",cout)),
+                     vjust = 2, hjust = 0, size = 3, color = "#246367", inherit.aes = FALSE)+
+  ggplot2:: labs(x = "log2(Fold change)",
+                 y =paste0("-log10(pvalue)"),
+                 title =paste0("Volcano of ",Feature) ) +
+ 
+  ggplot2::facet_wrap(~Label,scales = "free")+
+  ggplot2::ylim(0, max(plotData$`-log10pvalue`,na.rm = TRUE)*1.5)+
+  ggplot2::scale_color_manual(values = c('up'="#B43F53", 
+                                'down'='#246367'))+
+  ggplot2::guides(color= ggplot2::guide_legend(title="Type"))+
+  ggplot2::theme_bw(base_size = 12)+
+  ggplot2::theme(plot.title = ggplot2::element_text(size = 15, hjust = 0.5),
+                 plot.subtitle = ggplot2::element_text(size = 10, hjust = 0.5),
+                 plot.background = ggplot2::element_rect(fill = "white", color = NA),
+                 panel.background = ggplot2::element_rect(fill = "white", color = NA),
+                 panel.grid.major = ggplot2::element_blank(),
+                 panel.grid = ggplot2::element_blank(),
+                 panel.ontop = FALSE)
+
+
+
+result=list(pltvol1=plt_vol,pltvol2=plt.vol2,plt.curve.vol=plt_vol3,
+            dt_vol=diff.result |>as.data.frame() |>dplyr:: filter(significance!="nosig"),
+            dt_vol_curve=plotData |> as.data.frame()|>dplyr:: filter(newDiff!="nosig") |> dplyr::rename(curve.significance=newDiff) |> dplyr::select(-xmin,-xmax))
 
 return(result)
 
