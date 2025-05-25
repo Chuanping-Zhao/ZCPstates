@@ -88,7 +88,7 @@ plt_vol=
             vjust = 2, hjust = 0, size = 3, color = "#4874CB", inherit.aes = FALSE)+
 
   ggplot2::facet_wrap(~Label,scales = "free")+
-  ggplot2::theme_bw(base_size = 12) +
+  ggplot2::theme_bw(base_size = 10) +
   #ggplot2::xlim(-3, 3)+
  # ggplot2::ylim(0, 10)+
   ggplot2::theme(plot.title = ggplot2::element_text(size = 15, hjust = 0.5),
@@ -318,19 +318,25 @@ dat.marked = dat.marked.up  |>  dplyr::bind_rows(dat.marked.down)
 dat.infor = background.dat  |>
   dplyr::mutate("y.infor"=rep(0,length(Label)))
 
-down_up_counts=plotData  |>
-  dplyr:: filter(significance!="nosig")|> 
-  dplyr::group_by(Label,newDiff) |> 
-  dplyr::summarise(cout=dplyr::n())
+down_up_counts=plotData |>
+  dplyr::group_by(Label, newDiff) |>
+  dplyr::summarise(cout = dplyr::n(), .groups = "drop") |>
+  tidyr::complete(
+    Label,
+    newDiff = c("up", "down"),  
+    fill = list(cout = 0)
+  ) |> 
+  dplyr:: filter(newDiff!="nosig")
 
 dat.count= dat.infor|>
   dplyr::left_join(down_up_counts,by = "Label")
 
 
 
-plt_vol3=ggplot2::ggplot()+
-  ggplot2::geom_point(ggplot2::aes(x = log2FC, y = `-log10pvalue`),data = plotData  |>  dplyr::filter(newDiff == 'nosig'),size =2,color="grey70",alpha = 0.5)+
-  ggplot2::geom_point(ggplot2::aes(x = log2FC, y = `-log10pvalue`,color=newDiff),data = plotData  |>  dplyr:: filter(newDiff!= 'nosig'),size =2,alpha = 0.6)+
+plt_vol3=
+  ggplot2::ggplot()+
+  ggplot2::geom_point(ggplot2::aes(x = log2FC, y = `-log10pvalue`),data = plotData  |>  dplyr::filter(newDiff == 'nosig') |>  dplyr::filter(is.finite(log2FC), is.finite(`-log10pvalue`)),size =2,color="grey70",alpha = 0.5)+
+  ggplot2::geom_point(ggplot2::aes(x = log2FC, y = `-log10pvalue`,color=newDiff),data = plotData  |>  dplyr:: filter(newDiff!= 'nosig') |>  dplyr::filter(is.finite(log2FC), is.finite(`-log10pvalue`)),size =2,alpha = 0.6)+
   ggplot2::geom_line(data = curveData_all,  ggplot2::aes(x = xpos, y = ypos), lty = 2,  col = "grey10", lwd = 0.6) +
   ggrepel::geom_text_repel(data = plotData |> dplyr::arrange(dplyr::desc(abs(log2FC)))  |> 
                              dplyr::group_by(newDiff) |> 
@@ -338,7 +344,7 @@ plt_vol3=ggplot2::ggplot()+
                              dplyr::filter(newDiff!="nosig") |> 
                              dplyr::slice_head(n = top_marker),
                            ggplot2::aes(x = log2FC, y = `-log10pvalue`, label = get(Feature)),
-                           force = top_marker*1.5, color = 'black', size = 3.2,
+                           force = top_marker*1.5, color = 'black', size = 2,
                            point.padding = 0.5, hjust = 0.5,
                            arrow = ggplot2::arrow(length = grid::unit(0.02, "npc"),
                                          type = "open", ends = "last"),
@@ -346,7 +352,7 @@ plt_vol3=ggplot2::ggplot()+
                            segment.size = 0.3,
                            nudge_x = 0,
                            nudge_y = 1)+
-  ggplot2:: geom_text(data = down_up_counts |> dplyr:: filter(newDiff == "up"),
+  ggplot2:: geom_text(data = down_up_counts |> dplyr:: filter(newDiff == "up") ,
                       ggplot2::aes(x = Inf, y = Inf, label = paste0("n(up)=",cout)),
                       vjust = 2, hjust = 1, size = 3, color = "#B43F53", inherit.aes = FALSE) +
   ggplot2::geom_text(data = down_up_counts |> dplyr:: filter(newDiff == "down"),
@@ -357,11 +363,12 @@ plt_vol3=ggplot2::ggplot()+
                  title =paste0("Volcano of ",Feature) ) +
  
   ggplot2::facet_wrap(~Label,scales = "free")+
-  ggplot2::ylim(0, max(plotData$`-log10pvalue`,na.rm = TRUE)*1.5)+
+  ggplot2::coord_cartesian(ylim = c(0, max(plotData$`-log10pvalue`, na.rm = TRUE) * 1.5))+
+  #ggplot2::ylim(0, max(plotData$`-log10pvalue`,na.rm = TRUE)*1.5)+
   ggplot2::scale_color_manual(values = c('up'="#B43F53", 
                                 'down'='#246367'))+
   ggplot2::guides(color= ggplot2::guide_legend(title="Type"))+
-  ggplot2::theme_bw(base_size = 12)+
+ ggplot2::theme_bw(base_size = 10)+
   ggplot2::theme(plot.title = ggplot2::element_text(size = 15, hjust = 0.5),
                  plot.subtitle = ggplot2::element_text(size = 10, hjust = 0.5),
                  plot.background = ggplot2::element_rect(fill = "white", color = NA),
@@ -374,7 +381,8 @@ plt_vol3=ggplot2::ggplot()+
 
 result=list(pltvol1=plt_vol,pltvol2=plt.vol2,plt.curve.vol=plt_vol3,
             dt_vol=diff.result |>as.data.frame() |>dplyr:: filter(significance!="nosig"),
-            dt_vol_curve=plotData |> as.data.frame()|>dplyr:: filter(newDiff!="nosig") |> dplyr::rename(curve.significance=newDiff) |> dplyr::select(-xmin,-xmax))
+            dt_vol_curve=plotData |> as.data.frame()|>dplyr:: filter(newDiff!="nosig") |> dplyr::rename(curve.significance=newDiff) |> dplyr::select(-xmin,-xmax)
+            )
 
 return(result)
 
