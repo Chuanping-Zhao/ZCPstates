@@ -18,7 +18,7 @@
 #' dt <- data.frame(
 #'   Sample = rep(paste0("s", 1:7), each = 2),
 #'   Group = rep(c("A", "B"), times = 7),
-#'   count = c(25, 31, 66, 10, 28, 40, 50, 100, 108, 115, 80, 90, 94, 130)
+#'    count = c(25,100, 31, 108,66,115, 10,80, 28,90, 40,94, 50,130 )
 #' )
 #' easy_stepline(dt)
 #' easy_stepline(dt, color_map = c("darkred", "steelblue"), line_width = 1.2)
@@ -29,11 +29,11 @@ easy_stepline <- function(dt,
                           x.lab="sample",
                           y.lab="counts",
                           line_width = 0.8) {
-  
+
   df <- dt |>
     dplyr::mutate(Sample = factor(Sample, levels = unique(Sample))) |>
     dplyr::mutate(x = as.numeric(Sample) - 1)
-  
+
   p <- ggplot2::ggplot(df, ggplot2::aes(x = x, y = count, color = Group)) +
     ggplot2::geom_step(direction = "mid", linewidth = line_width) +
     ggplot2::geom_text(
@@ -62,7 +62,7 @@ easy_stepline <- function(dt,
       legend.title = ggplot2::element_text(size = 10),
       legend.text = ggplot2::element_text(size = 9)
     )
-  
+
   return(p)
 }
 
