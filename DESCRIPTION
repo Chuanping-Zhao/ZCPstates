@@ -10,7 +10,6 @@ Description: ZCPstates is a lightweight R package designed for daily
     data preprocessing and result interpretation.
 License: MIT
 Imports: 
-    aPEAR,
     crayon,
     data.table,
     dplyr,
@@ -42,7 +41,13 @@ Imports:
     utils,
     psych,
     vegan,
-    cowplot
+    cowplot,
+    MCL,
+    arules,
+    bayesbio,
+    foreach,
+    ggforce,
+    lsa
 Suggests:
     ggupset,
     viridis

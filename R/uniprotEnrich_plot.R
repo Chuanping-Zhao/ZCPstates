@@ -53,7 +53,6 @@
 #' @importFrom stringr str_extract str_remove_all str_remove str_trim
 #' @importFrom ggplot2 ggplot aes geom_point geom_col geom_text scale_y_continuous coord_flip theme_bw theme labs scale_color_gradientn scale_fill_gradientn facet_wrap
 #' @importFrom crayon yellow
-#' @importFrom aPEAR enrichmentNetwork
 #' @export
 #'
 uniprotEnrich_plot=function(
@@ -129,7 +128,7 @@ uniprotEnrich_plot=function(
           "network" = {#
             plt.network=suppressMessages(
               suppressWarnings(
-                aPEAR::enrichmentNetwork(dt.plot,
+                enrichmentNetwork(dt.plot,
                                          drawEllipses = TRUE,
                                          simMethod=network.simMethod,#方法参数
 
@@ -141,12 +140,13 @@ uniprotEnrich_plot=function(
                                          fontSize = network.fontsize,
                                          verbose = FALSE)+
                   #ggplot2::scale_color_gradientn(colours = c("#006AD2","white","#AF217C"),name = "Enrich factor")+
-                  ggplot2::scale_color_gradientn(colours = c("#1A5592","white","#B83D3D"),name = "Enrich factor")+
+                  ggplot2::scale_color_gradientn(colours = c("#1A5592","white","#B83D3D"),name = "NES")+
                   #viridis::scale_color_viridis(option = viridis.color,name="Enrich factor")+#,direction = -1
                   ggplot2::guides(size = ggplot2::guide_legend(title = "Pathway size"))+
                   ggplot2:: theme(legend.text = ggplot2::element_text(size = 10),
                                   legend.position = "left")
-              ))
+              )
+              )
           },
           "point"={#
             plt.network=
