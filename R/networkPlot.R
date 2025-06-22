@@ -117,7 +117,7 @@ enrichmentNetwork <- function(
 #'
 #' @import data.table
 #' @importFrom dplyr %>%
-#'
+#'@export
 enrichmentNetwork.prepareEnrichmentClusters <- function(enrichment, clusters, params) {
   clusterSizes <- table(clusters)
 
